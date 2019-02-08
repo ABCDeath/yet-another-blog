@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Blog</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Playfair+Display" rel="stylesheet">
+</head>
+<body>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
+
+    <div class="blog-container">
+        <header class="userinfo-header">
+            <div class="username-container" id="blog-userfullname">{{ user_info.full_name }}</div>
+            <div id="blog-postcount">Всего постов: {{ user_info.postcount }}</div>
+            <div class="author-container" id="blog-username">@{{ user_info.username }}</div>
+            <div id="blog-subscribe-button">subscribe button</div>
+        </header>
+        <main>
+            {% for post in posts %}
+                <div class="post-container">
+                    <h1 class="post-caption">{{ post.caption }}</h1>
+                    <div class="'content-container">
+                        <p class="post-content">{{ post.content_text }}</p>
+                    </div>
+                    <div class="post-footer">
+                        <div class="date-container">{{ post.pub_date }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </main>
+    </div>
+</body>
+</html>

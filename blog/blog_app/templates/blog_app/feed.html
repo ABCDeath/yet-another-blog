@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User feed page</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Playfair+Display" rel="stylesheet">
+</head>
+<body>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
+
+    {% for post in posts_feed %}
+        <div class="post-container">
+            <h1 class="post-caption">{{ post.caption }}</h1>
+            <div class="'content-container">
+                <p class="post-content">{{ post.content_text }}</p>
+            </div>
+            <div class="post-footer">
+                <div class="date-container">{{ post.pub_date }}</div>
+                <div class="author-container">
+                    @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>

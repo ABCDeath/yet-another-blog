@@ -7,11 +7,11 @@ class Profile(models.Model):
     subscription = models.ManyToManyField('self')
 
     def __str__(self):
-        return f'{self.user.username} ({self.user.get_full_name})'
+        return f'{self.user.username} ({self.user.get_full_name()})'
 
 class Post(models.Model):
     caption = models.CharField(max_length=128)
-    content_text = models.CharField(max_length=2048)
+    content_text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE)
 

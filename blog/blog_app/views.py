@@ -62,3 +62,10 @@ class BlogView(generic.ListView):
         }
 
         return context
+
+
+class PostView(generic.DetailView):
+    model = Post
+
+    template_name = 'blog_app/post_detail.html'
+    context_object_name = 'post'

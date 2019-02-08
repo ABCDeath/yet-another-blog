@@ -1,8 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import generic
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -69,3 +71,22 @@ class PostView(generic.DetailView):
 
     template_name = 'blog_app/post_detail.html'
     context_object_name = 'post'
+
+
+@method_decorator(login_required, name='dispatch')
+class PostCreate(generic.CreateView):
+    model = Post
+    fields = ['caption', 'content_text']
+
+    def form_valid(self, form):
+        form.instance.author = Profile.objects.get(user=self.request.user)
+        form.save()
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # TODO
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('post_detail', args=(self.object.pk,))

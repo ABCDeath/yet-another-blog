@@ -11,10 +11,15 @@
         <div class="post-footer">
             <div class="date-container">{{ post.pub_date }}</div>
             <div class="author-container">
-                <a href="{% url 'blog' post.author.user.profile.pk %}">
+                <a href="{% url 'blog' post.author.pk %}">
                     @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})
                 </a>
             </div>
+            {% if user_profile_pk == post.author.pk%}
+            <form action="{% url 'post_update' post.pk %}" method="get">
+                <input type="submit" value="Редактировать"/>
+            </form>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

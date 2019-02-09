@@ -9,6 +9,7 @@ from django.views import generic
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 
 from .models import Post, Profile
 
@@ -96,6 +97,12 @@ class PostCreate(generic.CreateView):
 class PostUpdate(generic.UpdateView):
     model = Post
     fields = ['caption', 'content_text']
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.get_object().author.user != request.user:
+            raise PermissionDenied('You are not an author of this post!')
+
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))

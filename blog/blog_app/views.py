@@ -42,6 +42,14 @@ class AllView(generic.ListView):
     def get_queryset(self):
         return Post.objects.prefetch_related('author').order_by('-pub_date')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context
+
 
 class FeedView(LoginRequiredMixin, AllView):
     model = Post
@@ -57,6 +65,13 @@ class FeedView(LoginRequiredMixin, AllView):
                 .filter(author__in=self.request.user.profile.subscription.all())
                 .order_by('-pub_date'))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context
 
 
 class BlogView(generic.ListView):
@@ -85,7 +100,15 @@ class BlogView(generic.ListView):
             'postcount': profile.post_set.count()
         }
 
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
         return context
+
+
+class SubscriptionView(generic.ListView):
+    pass
 
 
 class PostView(generic.DetailView):
@@ -93,6 +116,14 @@ class PostView(generic.DetailView):
 
     template_name = 'blog_app/post_detail.html'
     context_object_name = 'post'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context
 
 
 @method_decorator(login_required, name='dispatch')
@@ -113,6 +144,14 @@ class PostCreate(generic.CreateView):
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context
+
 
 @method_decorator(login_required, name='dispatch')
 class PostUpdate(generic.UpdateView):
@@ -128,6 +167,14 @@ class PostUpdate(generic.UpdateView):
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context
+
 
 @method_decorator(login_required, name='dispatch')
 class PostDelete(generic.DeleteView):
@@ -142,3 +189,11 @@ class PostDelete(generic.DeleteView):
     def get_success_url(self):
         return reverse_lazy(
             'blog', args=(Profile.objects.get(user=self.request.user).pk,))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context

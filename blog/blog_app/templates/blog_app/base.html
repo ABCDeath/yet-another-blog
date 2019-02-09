@@ -10,11 +10,16 @@
     <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
 
     <nav class="navbar">
-        <a class="" href="">Лента</a>
-        <a class="" href="">Мой блог</a>
-        <a class="" href="">Все блоги</a>
-        <a class="" href="">Управление подписками</a>
-        <a class="" href="">Выйти</a>
+        <a href="{% url 'all' %}">Все блоги</a>
+        {% if user_profile_pk %}
+            <a href="{% url 'feed' %}">Лента</a>
+            <a href="{% url 'blog' user_profile_pk %}">Мой блог</a>
+            <a href="{% url 'subscription' user_profile_pk %}">Управление подписками</a>
+            <a href="{% url 'logout' %}">Выйти</a>
+        {% else %}
+            <a href="{% url 'login' %}">Войти</a>
+        {% endif %}
+        <p>{{ options }}</p>
     </nav>
 
     <div class="blog-container">

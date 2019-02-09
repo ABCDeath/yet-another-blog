@@ -5,14 +5,18 @@
 {% block main_content %}
     {% for post in posts_feed %}
         <div class="post-container">
-            <h1 class="post-caption">{{ post.caption }}</h1>
+            <a href="{% url 'post_detail' post.pk %}">
+                <h1 class="post-caption">{{ post.caption }}</h1>
+            </a>
             <div class="content-container">
                 <span class="post-content">{{ post.content_text|linebreaks }}</span>
             </div>
             <div class="post-footer">
                 <div class="date-container">{{ post.pub_date }}</div>
                 <div class="author-container">
-                    @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})
+                    <a href="{% url 'blog' post.author.user.profile.pk %}">
+                        @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})
+                    </a>
                 </div>
             </div>
         </div>

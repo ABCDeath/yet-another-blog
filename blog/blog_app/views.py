@@ -14,7 +14,36 @@ from django.core.exceptions import PermissionDenied
 from .models import Post, Profile
 
 
-class FeedView(LoginRequiredMixin, generic.ListView):
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
+
+
+class RootRedirectView(generic.RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return (reverse_lazy('feed') if self.request.user.is_authenticated
+                else reverse_lazy('all'))
+
+
+class AllView(generic.ListView):
+    model = Post
+
+    login_url = '/accounts/login/'
+
+    template_name = 'blog_app/feed.html'
+    context_object_name = 'posts_feed'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Post.objects.prefetch_related('author').order_by('-pub_date')
+
+
+class FeedView(LoginRequiredMixin, AllView):
     model = Post
 
     login_url = '/accounts/login/'
@@ -28,14 +57,6 @@ class FeedView(LoginRequiredMixin, generic.ListView):
                 .filter(author__in=self.request.user.profile.subscription.all())
                 .order_by('-pub_date'))
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
 
 
 class BlogView(generic.ListView):

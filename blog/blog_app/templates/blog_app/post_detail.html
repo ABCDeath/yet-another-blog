@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Post detail</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Playfair+Display" rel="stylesheet">
-</head>
-<body>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
+{% extends "blog_app/base.html" %}
 
+{% block title %}Пост{% endblock %}
+
+{% block main_content %}
     <div class="post-container">
         <h1 class="post-caption">{{ post.caption }}</h1>
         <div class="content-container">
@@ -21,6 +15,4 @@
             </div>
         </div>
     </div>
-
-</body>
-</html>
+{% endblock %}

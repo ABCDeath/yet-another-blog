@@ -100,9 +100,24 @@ class PostUpdate(generic.UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         if self.get_object().author.user != request.user:
-            raise PermissionDenied('You are not an author of this post!')
+            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))
+
+
+@method_decorator(login_required, name='dispatch')
+class PostDelete(generic.DeleteView):
+    model = Post
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.get_object().author.user != request.user:
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog', args=(Profile.objects.get(user=self.request.user).pk,))

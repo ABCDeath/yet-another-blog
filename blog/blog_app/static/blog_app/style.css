@@ -136,3 +136,28 @@
     font-family: 'Playfair Display', serif;
     text-align: justify;
 }
+
+/* navigation bar styles */
+.navbar {
+  overflow: hidden;
+  background-color: #024849;
+}
+
+.navbar a {
+  float: left;
+  color: #E0E0E0;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.navbar a:hover {
+  background-color: #89DDCB;
+  color: #242E3F;
+}
+
+.navbar a.active {
+  background-color: #0C0F65;
+  color: #D1D3D1;
+}

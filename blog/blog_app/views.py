@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -80,6 +80,17 @@ class BlogView(generic.ListView):
     context_object_name = 'posts'
     paginate_by = 10
 
+    def post(self, request, *args, **kwargs):
+        profile = Profile.objects.get(pk=kwargs['profile_pk'])
+
+        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
+            self.request.user.profile.subscription.remove(profile)
+        else:
+            self.request.user.profile.subscription.add(profile)
+
+        return HttpResponseRedirect(reverse('blog', args=(profile.pk,)))
+
+
     def get_queryset(self):
         if not Profile.objects.filter(pk=self.kwargs['profile_pk']).exists():
             raise Http404(f'User profile with pk = {self.kwargs["profile_pk"]} '
@@ -115,6 +126,15 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
     template_name = 'blog_app/subscription.html'
     context_object_name = 'profiles'
 
+    def post(self, request, *args, **kwargs):
+        profile = Profile.objects.get(pk=kwargs['profile_pk'])
+
+        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
+            self.request.user.profile.subscription.remove(profile)
+
+        return HttpResponseRedirect(
+            reverse('subscription', args=(self.request.user.profile.pk,)))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['user_profile_pk'] = (self.request.user.profile.pk
@@ -122,6 +142,10 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
                                       else None)
 
         return context
+
+    def get_queryset(self):
+        return (self.request.user.profile.subscription.all()
+                .order_by('user__username'))
 
 
 class PostView(generic.DetailView):

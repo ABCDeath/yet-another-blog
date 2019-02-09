@@ -12,7 +12,7 @@
             <a href="{% url 'blog' profile.pk %}">
                 @{{ profile.user.username }} ({{ profile.user.get_full_name }})</a>
             <span style="font-style: normal">Постов: {{ profile.post_set.count }}</span>
-            <form method="post">
+            <form action="{% url 'subscription' profile.pk %}" method="post">{% csrf_token %}
                 <input type="submit" value="Отписаться">
             </form>
         </div>

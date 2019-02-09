@@ -9,7 +9,7 @@
     <div class="author-container" id="blog-username">@{{ user_info.username }}</div>
     {% if user_profile_pk and user_info.pk != user_profile_pk %}
         <div id="blog-subscribe-button">
-            <form action="" method="post">
+            <form method="post">{% csrf_token %}
                 <input type="submit" value="{% if has_subscription %} Отписаться {% else %} Подписаться {% endif %}">
             </form>
         </div>

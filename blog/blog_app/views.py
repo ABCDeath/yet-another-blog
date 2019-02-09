@@ -106,8 +106,11 @@ class BlogView(generic.ListView):
         return context
 
 
-class SubscriptionView(generic.ListView):
-    pass
+class SubscriptionView(LoginRequiredMixin, generic.ListView):
+    model = Profile
+
+    template_name = 'blog_app/subscription.html'
+    context_object_name = 'profiles'
 
 
 class PostView(generic.DetailView):

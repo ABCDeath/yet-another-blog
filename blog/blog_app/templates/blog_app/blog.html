@@ -15,8 +15,7 @@
     {% for post in posts %}
         <div class="post-container">
             <a href="{% url 'post_detail' post.pk %}">
-                <h1 class="post-caption">{{ post.caption }}</h1>
-            </a>
+                <h1 class="post-caption">{{ post.caption }}</h1></a>
             <div class="content-container">
                 <span class="post-content">{{ post.content_text|linebreaks }}</span>
             </div>

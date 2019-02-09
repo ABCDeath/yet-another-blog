@@ -1,0 +1,20 @@
+{% extends "blog_app/base.html" %}
+
+{% block title %}Блог{% endblock %}
+
+{% block header_content %}
+    <h1>Вы подписаны на:</h1>
+{% endblock %}
+
+{% block main_content %}
+    {% for profile in profiles %}
+        <div class="author-container">
+            <a href="{% url 'blog' profile.pk %}">
+                @{{ profile.user.username }} ({{ profile.user.get_full_name }})</a>
+            <span style="font-style: normal">Постов: {{ profile.post_set.count }}</span>
+            <form method="post">
+                <input type="submit" value="Отписаться">
+            </form>
+        </div>
+    {% endfor %}
+{% endblock %}

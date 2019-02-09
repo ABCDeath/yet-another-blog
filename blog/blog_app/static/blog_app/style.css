@@ -40,7 +40,8 @@
 .content-container {
     max-height: 500px;
     height: auto;
-    overflow: scroll;
+    padding: 1px 5px 1px 1px;
+    overflow-y: auto;
 }
 
 .post-content {

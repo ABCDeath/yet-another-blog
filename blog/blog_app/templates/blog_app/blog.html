@@ -7,7 +7,13 @@
     <div class="username-container" id="blog-userfullname">{{ user_info.full_name }}</div>
     <div id="blog-postcount">Всего постов: {{ user_info.postcount }}</div>
     <div class="author-container" id="blog-username">@{{ user_info.username }}</div>
-    <div id="blog-subscribe-button">subscribe button</div>
+    {% if user_profile_pk and user_info.pk != user_profile_pk %}
+        <div id="blog-subscribe-button">
+            <form action="" method="post">
+                <input type="submit" value="{% if has_subscription %} Отписаться {% else %} Подписаться {% endif %}">
+            </form>
+        </div>
+    {% endif %}
 </header>
 {% endblock %}
 

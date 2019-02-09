@@ -90,18 +90,21 @@ class BlogView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        profile = (Profile.objects.select_related('user')
-                   .get(pk=self.kwargs['profile_pk']))
+        profile_pk = self.kwargs['profile_pk']
+        profile = (Profile.objects.select_related('user').get(pk=profile_pk))
 
         context['user_info'] = {
             'username': profile.user.username,
             'full_name': profile.user.get_full_name,
-            'postcount': profile.post_set.count()
+            'postcount': profile.post_set.count(),
+            'pk': profile_pk
         }
 
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        if self.request.user.is_authenticated:
+            context['user_profile_pk'] = self.request.user.profile.pk
+            context['has_subscription'] = (self.request.user.profile
+                                           .subscription.filter(pk=profile_pk)
+                                           .exists())
 
         return context
 
@@ -111,6 +114,14 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
 
     template_name = 'blog_app/subscription.html'
     context_object_name = 'profiles'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile_pk'] = (self.request.user.profile.pk
+                                      if self.request.user.is_authenticated
+                                      else None)
+
+        return context
 
 
 class PostView(generic.DetailView):

@@ -90,3 +90,12 @@ class PostCreate(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))
+
+
+@method_decorator(login_required, name='dispatch')
+class PostUpdate(generic.UpdateView):
+    model = Post
+    fields = ['caption', 'content_text']
+
+    def get_success_url(self):
+        return reverse_lazy('post_detail', args=(self.object.pk,))

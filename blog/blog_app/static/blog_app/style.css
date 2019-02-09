@@ -60,6 +60,7 @@
     font-size: 15px;
     font-style: oblique;
     color: #143960;
+    margin: 15px auto;
 }
 
 /* blog styles */
@@ -95,6 +96,7 @@
 
 #blog-username {
     grid-area: grid-username;
+    margin: 5px 5px 1px 1px;
 }
 
 #blog-subscribe-button {

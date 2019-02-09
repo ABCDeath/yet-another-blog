@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -80,6 +80,17 @@ class BlogView(generic.ListView):
     context_object_name = 'posts'
     paginate_by = 10
 
+    def post(self, request, *args, **kwargs):
+        profile = Profile.objects.get(pk=kwargs['profile_pk'])
+
+        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
+            self.request.user.profile.subscription.remove(profile)
+        else:
+            self.request.user.profile.subscription.add(profile)
+
+        return HttpResponseRedirect(reverse('blog', args=(profile.pk,)))
+
+
     def get_queryset(self):
         if not Profile.objects.filter(pk=self.kwargs['profile_pk']).exists():
             raise Http404(f'User profile with pk = {self.kwargs["profile_pk"]} '
@@ -90,24 +101,51 @@ class BlogView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        profile = (Profile.objects.select_related('user')
-                   .get(pk=self.kwargs['profile_pk']))
+        profile_pk = self.kwargs['profile_pk']
+        profile = (Profile.objects.select_related('user').get(pk=profile_pk))
 
         context['user_info'] = {
             'username': profile.user.username,
             'full_name': profile.user.get_full_name,
-            'postcount': profile.post_set.count()
+            'postcount': profile.post_set.count(),
+            'pk': profile_pk
         }
 
+        if self.request.user.is_authenticated:
+            context['user_profile_pk'] = self.request.user.profile.pk
+            context['has_subscription'] = (self.request.user.profile
+                                           .subscription.filter(pk=profile_pk)
+                                           .exists())
+
+        return context
+
+
+class SubscriptionView(LoginRequiredMixin, generic.ListView):
+    model = Profile
+
+    template_name = 'blog_app/subscription.html'
+    context_object_name = 'profiles'
+
+    def post(self, request, *args, **kwargs):
+        profile = Profile.objects.get(pk=kwargs['profile_pk'])
+
+        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
+            self.request.user.profile.subscription.remove(profile)
+
+        return HttpResponseRedirect(
+            reverse('subscription', args=(self.request.user.profile.pk,)))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context['user_profile_pk'] = (self.request.user.profile.pk
                                       if self.request.user.is_authenticated
                                       else None)
 
         return context
 
-
-class SubscriptionView(generic.ListView):
-    pass
+    def get_queryset(self):
+        return (self.request.user.profile.subscription.all()
+                .order_by('user__username'))
 
 
 class PostView(generic.DetailView):

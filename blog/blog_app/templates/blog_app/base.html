@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Blog{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Playfair+Display" rel="stylesheet">
+</head>
+<body>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
+
+    <nav class="navbar">
+        <a href="{% url 'all' %}">Все блоги</a>
+        {% if user_profile_pk %}
+            <a href="{% url 'feed' %}">Лента</a>
+            <a href="{% url 'blog' user_profile_pk %}">Мой блог</a>
+            <a href="{% url 'subscription' user_profile_pk %}">Управление подписками</a>
+            <a href="{% url 'logout' %}">Выйти</a>
+        {% else %}
+            <a href="{% url 'login' %}">Войти</a>
+        {% endif %}
+        <p>{{ options }}</p>
+    </nav>
+
+    <div class="blog-container">
+        {% block header_content %}{% endblock %}
+        <main>
+            {% block main_content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

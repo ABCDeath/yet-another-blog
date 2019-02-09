@@ -1,27 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>User feed page</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Playfair+Display" rel="stylesheet">
-</head>
-<body>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
+{% extends "blog_app/base.html" %}
 
+{% block title %}Лента{% endblock %}
+
+{% block main_content %}
     {% for post in posts_feed %}
         <div class="post-container">
-            <h1 class="post-caption">{{ post.caption }}</h1>
+            <a href="{% url 'post_detail' post.pk %}">
+                <h1 class="post-caption">{{ post.caption }}</h1>
+            </a>
             <div class="content-container">
                 <span class="post-content">{{ post.content_text|linebreaks }}</span>
             </div>
             <div class="post-footer">
                 <div class="date-container">{{ post.pub_date }}</div>
                 <div class="author-container">
-                    @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})
+                    <a href="{% url 'blog' post.author.user.profile.pk %}">
+                        @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})
+                    </a>
                 </div>
             </div>
         </div>
     {% endfor %}
-</body>
-</html>
+{% endblock %}

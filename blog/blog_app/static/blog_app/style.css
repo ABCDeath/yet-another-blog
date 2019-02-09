@@ -5,7 +5,7 @@
 }
 
 .login {
-    border: 1px solid #eaeaea;
+    border: 1px solid #EAEAEA;
     border-radius: 4px;
     overflow: hidden;
     width: 28em;
@@ -26,6 +26,7 @@
     border-radius: 4px;
     margin: 15px auto;
     width: 60em;
+    background-color: #ECF2FF99;
 }
 
 .post-caption {
@@ -39,7 +40,8 @@
 .content-container {
     max-height: 500px;
     height: auto;
-    overflow: scroll;
+    padding: 1px 5px 1px 1px;
+    overflow-y: auto;
 }
 
 .post-content {
@@ -100,4 +102,37 @@
     justify-self: end;
 }
 
+/* post form styles */
+.form-caption-container {
+    height: auto;
+    padding: 1px 10px 10px 10px;
+    margin: 15px auto;
+    width: inherit;
+}
 
+#id_caption {
+    width: 100%;
+    margin: 8px 0;
+    box-sizing: border-box;
+    color: #262626;
+    font-family: 'Roboto Slab', serif;
+}
+
+.form-content-text-container {
+    height: auto;
+    padding: 1px 10px 10px 10px;
+    margin: 15px auto;
+    width: inherit;
+}
+
+#id_content_text {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border-radius: 4px;
+    padding: 5px 5px 5px 5px;
+    font-family: 'Playfair Display', serif;
+    text-align: justify;
+}

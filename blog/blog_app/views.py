@@ -1,11 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
-from django.urls import reverse, reverse_lazy
-from django.utils import timezone
+from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -19,9 +18,18 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
 
+
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+@receiver(m2m_changed, sender=Profile.following.through)
+def profile_update(sender, instance, **kwargs):
+    if kwargs.get('action') == 'post_remove':
+        posts_read = instance.posts_read.filter(
+            author__id__in=kwargs.get('pk_set'))
+        instance.posts_read.remove(*posts_read)
 
 
 class RootRedirectView(generic.RedirectView):
@@ -111,7 +119,6 @@ class ProfileUpdateView(generic.UpdateView):
             return HttpResponseBadRequest(f'Bad request: {request.path}')
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
 
 
 class BlogView(generic.ListView):

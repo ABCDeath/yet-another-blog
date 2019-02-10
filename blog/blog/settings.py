@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+from .credentials import credentials
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 ]
 
 MIDDLEWARE = [
@@ -78,8 +81,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'blog',
-        'USER': 'banana',
-        'PASSWORD': '123',
+        'USER': credentials['db']['user'],
+        'PASSWORD': credentials['db']['password'],
         'HOST': '127.0.0.1',
         'PORT': '5432',
     },
@@ -126,3 +129,12 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = 'root_redirect'
 LOGOUT_REDIRECT_URL = 'root_redirect'
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = credentials['gmail smtp']['user']
+EMAIL_HOST_PASSWORD = credentials['gmail smtp']['password']
+DEFAULT_FROM_EMAIL = 'noreply@yetanotherblog.org'
+
+SITE_ID = 1

@@ -9,6 +9,8 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
+from django.contrib.sites.models import Site
 
 from .models import Post, Profile
 
@@ -30,6 +32,24 @@ def profile_update(sender, instance, **kwargs):
         posts_read = instance.posts_read.filter(
             author__id__in=kwargs.get('pk_set'))
         instance.posts_read.remove(*posts_read)
+
+
+@receiver(post_save, sender=Post)
+def post_create_email_followers(sender, instance, created, **kwargs):
+    if created:
+        followers_email = list(Profile.objects.select_related('user')
+                           .filter(following=instance.author)
+                           .values_list('user__email', flat=True))
+
+        link = ''.join([Site.objects.get_current().domain,
+                        str(reverse_lazy('post_detail', args=(instance.pk,)))])
+
+        send_mail(
+            'Новый пост в вашей ленте',
+            f'Пользователь @{instance.author} написал новый пост: {link}',
+            'noreply@yetanotherblog.org',
+            followers_email
+        )
 
 
 class RootRedirectView(generic.RedirectView):
@@ -200,10 +220,6 @@ class PostCreate(generic.CreateView):
         form.save()
 
         return super().form_valid(form)
-
-    def form_invalid(self, form):
-        # TODO
-        return super().form_invalid(form)
 
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))

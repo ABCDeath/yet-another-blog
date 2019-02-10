@@ -9,7 +9,13 @@
                 <h1 class="post-caption">{{ post.caption }}</h1>
             </a>
             <div class="content-container">
-                <span class="post-content">{{ post.content_text|linebreaks }}</span>
+                <span class="post-content">
+                    {% if user_profile and user_profile in post.profile_set.all %}
+                        {{ post.content_text|linebreaks|truncatewords:"64" }}
+                    {% else %}
+                        {{ post.content_text|linebreaks }}
+                    {% endif %}
+                </span>
             </div>
             <div class="post-footer">
                 <div class="date-container">{{ post.pub_date|date:"j F (D) Y - H:i" }}</div>
@@ -17,6 +23,17 @@
                     <a href="{% url 'blog' post.author.user.profile.pk %}">
                         @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})</a>
                 </div>
+                {% if user_profile %}
+                    <form action="{% url 'post_mark' %}" method="post">{% csrf_token %}
+                        <button type="submit" id="mark_post_{{ forloop.counter }}" name="mark_post_read" value="{{ post.pk }}">
+                            {% if user_profile and user_profile in post.profile_set.all %}
+                                Отметить: не прочитано
+                            {% else %}
+                                Отметить: прочитано
+                            {% endif %}
+                        </button>
+                    </form>
+                {% endif %}
             </div>
         </div>
     {% endfor %}

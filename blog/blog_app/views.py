@@ -74,6 +74,30 @@ class FeedView(LoginRequiredMixin, AllView):
         return context
 
 
+@method_decorator(login_required, name='dispatch')
+class ProfileUpdateView(generic.UpdateView):
+    model = Profile
+
+    def _mark_post(self, user_profile, post_pk):
+        post = get_object_or_404(Post, pk=post_pk)
+        if post in user_profile.posts_read.all():
+            user_profile.posts_read.remove(post)
+        else:
+            user_profile.posts_read.add(post)
+
+    def get(self, request, *args, **kwargs):
+        raise Http404
+
+    def post(self, request, *args, **kwargs):
+        if 'mark_post_read' in request.POST:
+            self._mark_post(self.request.user.profile, request.POST['mark_post_read'])
+        else:
+            return HttpResponseBadRequest
+
+        return HttpResponseRedirect(reverse('feed'))
+
+
+
 class BlogView(generic.ListView):
     model = Post
 

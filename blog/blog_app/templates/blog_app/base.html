@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Blog{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Playfair+Display" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab|Vollkorn" rel="stylesheet">
 </head>
 <body>
     {% load static %}
@@ -14,6 +14,7 @@
         {% if user_profile %}
             <a href="{% url 'feed' %}">Лента</a>
             <a href="{% url 'blog' user_profile.pk %}">Мой блог</a>
+            <a href="{% url 'post_create' %}">Написать пост</a>
             <a href="{% url 'following' user_profile.pk %}">Управление подписками</a>
             <a href="{% url 'logout' %}">Выйти</a>
         {% else %}

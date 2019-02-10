@@ -85,16 +85,32 @@ class ProfileUpdateView(generic.UpdateView):
         else:
             user_profile.posts_read.add(post)
 
+    def _manage_follow(self, user_profile, follow, unfollow):
+        profile = Profile.objects.get(pk=follow or unfollow)
+
+        if user_profile == profile:
+            return
+
+        if follow:
+            user_profile.following.add(profile)
+        elif unfollow:
+            user_profile.following.remove(profile)
+
     def get(self, request, *args, **kwargs):
         raise Http404
 
     def post(self, request, *args, **kwargs):
         if 'mark_post_read' in request.POST:
-            self._mark_post(self.request.user.profile, request.POST['mark_post_read'])
+            self._mark_post(self.request.user.profile,
+                            request.POST['mark_post_read'])
+        elif 'follow' in request.POST or 'unfollow' in request.POST:
+            self._manage_follow(
+                self.request.user.profile,
+                request.POST.get('follow'), request.POST.get('unfollow'))
         else:
-            return HttpResponseBadRequest
+            return HttpResponseBadRequest(f'Bad request: {request.path}')
 
-        return HttpResponseRedirect(reverse('feed'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 
@@ -104,17 +120,6 @@ class BlogView(generic.ListView):
     template_name = 'blog_app/blog.html'
     context_object_name = 'posts'
     paginate_by = 10
-
-    def post(self, request, *args, **kwargs):
-        profile = Profile.objects.get(pk=kwargs['profile_pk'])
-
-        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
-            self.request.user.profile.subscription.remove(profile)
-        else:
-            self.request.user.profile.subscription.add(profile)
-
-        return HttpResponseRedirect(reverse('blog', args=(profile.pk,)))
-
 
     def get_queryset(self):
         if not Profile.objects.filter(pk=self.kwargs['profile_pk']).exists():
@@ -150,15 +155,6 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
 
     template_name = 'blog_app/subscription.html'
     context_object_name = 'profiles'
-
-    def post(self, request, *args, **kwargs):
-        profile = Profile.objects.get(pk=kwargs['profile_pk'])
-
-        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
-            self.request.user.profile.subscription.remove(profile)
-
-        return HttpResponseRedirect(
-            reverse('subscription', args=(self.request.user.profile.pk,)))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

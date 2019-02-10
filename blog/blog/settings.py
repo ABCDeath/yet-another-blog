@@ -130,6 +130,10 @@ STATIC_URL = '/static/'
 LOGIN_REDIRECT_URL = 'root_redirect'
 LOGOUT_REDIRECT_URL = 'root_redirect'
 
+# settings for email notification
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -138,3 +142,7 @@ EMAIL_HOST_PASSWORD = credentials['gmail smtp']['password']
 DEFAULT_FROM_EMAIL = 'noreply@yetanotherblog.org'
 
 SITE_ID = 1
+
+REDIS_SERVER = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = REDIS_SERVER
+CELERY_RESULT_BACKEND = REDIS_SERVER

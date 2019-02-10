@@ -9,10 +9,11 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
-from django.core.mail import send_mail
-from django.contrib.sites.models import Site
+
+from celery import group
 
 from .models import Post, Profile
+from .tasks import send_new_post_notification
 
 
 @receiver(post_save, sender=User)
@@ -37,19 +38,18 @@ def profile_update(sender, instance, **kwargs):
 @receiver(post_save, sender=Post)
 def post_create_email_followers(sender, instance, created, **kwargs):
     if created:
-        followers_email = list(Profile.objects.select_related('user')
-                           .filter(following=instance.author)
-                           .values_list('user__email', flat=True))
+        followers_email = list(
+            Profile.objects.select_related('user')
+                .filter(following=instance.author)
+                .values_list('user__email', flat=True))
 
-        link = ''.join([Site.objects.get_current().domain,
-                        str(reverse_lazy('post_detail', args=(instance.pk,)))])
+        path = str(reverse_lazy('post_detail', args=(instance.pk,)))
 
-        send_mail(
-            'Новый пост в вашей ленте',
-            f'Пользователь @{instance.author} написал новый пост: {link}',
-            'noreply@yetanotherblog.org',
-            followers_email
-        )
+        send_tasks = group(
+            send_new_post_notification.si(
+                str(instance.author), path, email)
+            for email in followers_email)
+        send_tasks()
 
 
 class RootRedirectView(generic.RedirectView):

@@ -7,9 +7,9 @@
     <div class="username-container" id="blog-userfullname">{{ user_info.full_name }}</div>
     <div id="blog-postcount">Всего постов: {{ user_info.postcount }}</div>
     <div class="author-container" id="blog-username">@{{ user_info.username }}</div>
-    {% if user_profile_pk and user_info.pk != user_profile_pk %}
+    {% if user_profile and user_info.pk != user_profile.pk %}
         <div id="blog-subscribe-button">
-            <form method="post">{% csrf_token %}
+            <form action="{% url 'subscribe' user_info.pk %}" method="post">{% csrf_token %}
                 <input type="submit" value="{% if has_subscription %} Отписаться {% else %} Подписаться {% endif %}">
             </form>
         </div>
@@ -26,7 +26,7 @@
                 <span class="post-content">{{ post.content_text|linebreaks }}</span>
             </div>
             <div class="post-footer">
-                <div class="date-container">{{ post.pub_date }}</div>
+                <div class="date-container">{{ post.pub_date|date:"j F (D) Y - H:i" }}</div>
             </div>
         </div>
     {% endfor %}

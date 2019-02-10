@@ -11,10 +11,10 @@
 
     <nav class="navbar">
         <a href="{% url 'all' %}">Все блоги</a>
-        {% if user_profile_pk %}
+        {% if user_profile %}
             <a href="{% url 'feed' %}">Лента</a>
-            <a href="{% url 'blog' user_profile_pk %}">Мой блог</a>
-            <a href="{% url 'subscription' user_profile_pk %}">Управление подписками</a>
+            <a href="{% url 'blog' user_profile.pk %}">Мой блог</a>
+            <a href="{% url 'subscription' user_profile.pk %}">Управление подписками</a>
             <a href="{% url 'logout' %}">Выйти</a>
         {% else %}
             <a href="{% url 'login' %}">Войти</a>

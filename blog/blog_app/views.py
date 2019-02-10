@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -9,6 +9,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
 
 from .models import Post, Profile
 
@@ -43,9 +44,9 @@ class AllView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context
 
@@ -66,11 +67,35 @@ class FeedView(LoginRequiredMixin, AllView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context
+
+
+@method_decorator(login_required, name='dispatch')
+class ProfileUpdateView(generic.UpdateView):
+    model = Profile
+
+    def _mark_post(self, user_profile, post_pk):
+        post = get_object_or_404(Post, pk=post_pk)
+        if post in user_profile.posts_read.all():
+            user_profile.posts_read.remove(post)
+        else:
+            user_profile.posts_read.add(post)
+
+    def get(self, request, *args, **kwargs):
+        raise Http404
+
+    def post(self, request, *args, **kwargs):
+        if 'mark_post_read' in request.POST:
+            self._mark_post(self.request.user.profile, request.POST['mark_post_read'])
+        else:
+            return HttpResponseBadRequest
+
+        return HttpResponseRedirect(reverse('feed'))
+
 
 
 class BlogView(generic.ListView):
@@ -112,7 +137,7 @@ class BlogView(generic.ListView):
         }
 
         if self.request.user.is_authenticated:
-            context['user_profile_pk'] = self.request.user.profile.pk
+            context['user_profile'] = self.request.user.profile
             context['has_subscription'] = (self.request.user.profile
                                            .subscription.filter(pk=profile_pk)
                                            .exists())
@@ -137,9 +162,9 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context
 
@@ -156,9 +181,9 @@ class PostView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context
 
@@ -183,9 +208,9 @@ class PostCreate(generic.CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context
 
@@ -206,9 +231,9 @@ class PostUpdate(generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context
 
@@ -229,8 +254,8 @@ class PostDelete(generic.DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_profile_pk'] = (self.request.user.profile.pk
-                                      if self.request.user.is_authenticated
-                                      else None)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
 
         return context

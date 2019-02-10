@@ -1,11 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
-from django.urls import reverse, reverse_lazy
-from django.utils import timezone
+from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -19,9 +18,18 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
 
+
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+@receiver(m2m_changed, sender=Profile.following.through)
+def profile_update(sender, instance, **kwargs):
+    if kwargs.get('action') == 'post_remove':
+        posts_read = instance.posts_read.filter(
+            author__id__in=kwargs.get('pk_set'))
+        instance.posts_read.remove(*posts_read)
 
 
 class RootRedirectView(generic.RedirectView):
@@ -62,7 +70,7 @@ class FeedView(LoginRequiredMixin, AllView):
 
     def get_queryset(self):
         return (Post.objects.prefetch_related('author')
-                .filter(author__in=self.request.user.profile.subscription.all())
+                .filter(author__in=self.request.user.profile.following.all())
                 .order_by('-pub_date'))
 
     def get_context_data(self, **kwargs):
@@ -85,17 +93,32 @@ class ProfileUpdateView(generic.UpdateView):
         else:
             user_profile.posts_read.add(post)
 
+    def _manage_follow(self, user_profile, follow, unfollow):
+        profile = Profile.objects.get(pk=follow or unfollow)
+
+        if user_profile == profile:
+            return
+
+        if follow:
+            user_profile.following.add(profile)
+        elif unfollow:
+            user_profile.following.remove(profile)
+
     def get(self, request, *args, **kwargs):
         raise Http404
 
     def post(self, request, *args, **kwargs):
         if 'mark_post_read' in request.POST:
-            self._mark_post(self.request.user.profile, request.POST['mark_post_read'])
+            self._mark_post(self.request.user.profile,
+                            request.POST['mark_post_read'])
+        elif 'follow' in request.POST or 'unfollow' in request.POST:
+            self._manage_follow(
+                self.request.user.profile,
+                request.POST.get('follow'), request.POST.get('unfollow'))
         else:
-            return HttpResponseBadRequest
+            return HttpResponseBadRequest(f'Bad request: {request.path}')
 
-        return HttpResponseRedirect(reverse('feed'))
-
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class BlogView(generic.ListView):
@@ -104,17 +127,6 @@ class BlogView(generic.ListView):
     template_name = 'blog_app/blog.html'
     context_object_name = 'posts'
     paginate_by = 10
-
-    def post(self, request, *args, **kwargs):
-        profile = Profile.objects.get(pk=kwargs['profile_pk'])
-
-        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
-            self.request.user.profile.subscription.remove(profile)
-        else:
-            self.request.user.profile.subscription.add(profile)
-
-        return HttpResponseRedirect(reverse('blog', args=(profile.pk,)))
-
 
     def get_queryset(self):
         if not Profile.objects.filter(pk=self.kwargs['profile_pk']).exists():
@@ -138,27 +150,17 @@ class BlogView(generic.ListView):
 
         if self.request.user.is_authenticated:
             context['user_profile'] = self.request.user.profile
-            context['has_subscription'] = (self.request.user.profile
-                                           .subscription.filter(pk=profile_pk)
-                                           .exists())
+            context['is_followed'] = (self.request.user.profile
+                                      .following.filter(pk=profile_pk).exists())
 
         return context
 
 
-class SubscriptionView(LoginRequiredMixin, generic.ListView):
+class FollowingView(LoginRequiredMixin, generic.ListView):
     model = Profile
 
-    template_name = 'blog_app/subscription.html'
+    template_name = 'blog_app/following.html'
     context_object_name = 'profiles'
-
-    def post(self, request, *args, **kwargs):
-        profile = Profile.objects.get(pk=kwargs['profile_pk'])
-
-        if self.request.user.profile.subscription.filter(pk=profile.pk).exists():
-            self.request.user.profile.subscription.remove(profile)
-
-        return HttpResponseRedirect(
-            reverse('subscription', args=(self.request.user.profile.pk,)))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -169,7 +171,7 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
         return context
 
     def get_queryset(self):
-        return (self.request.user.profile.subscription.all()
+        return (self.request.user.profile.following.all()
                 .order_by('user__username'))
 
 

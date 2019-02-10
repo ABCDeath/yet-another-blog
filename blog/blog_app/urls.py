@@ -8,10 +8,10 @@ urlpatterns = [
     path('feed', views.FeedView.as_view(), name='feed'),
 
     path('user/<int:profile_pk>/', views.BlogView.as_view(), name='blog'),
-    path('user/<int:profile_pk>/subscription', views.SubscriptionView.as_view(),
-         name='subscription'),
-    path('user/<int:profile_pk>/subscribe', views.ProfileUpdateView.as_view(),
-         name='subscribe'),
+    path('user/<int:profile_pk>/following', views.FollowingView.as_view(),
+         name='following'),
+    path('user/<int:profile_pk>/follow', views.ProfileUpdateView.as_view(),
+         name='manage_follow'),
 
     path('post/mark_as_read', views.ProfileUpdateView.as_view(),
          name='post_mark'),

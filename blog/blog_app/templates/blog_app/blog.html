@@ -9,8 +9,14 @@
     <div class="author-container" id="blog-username">@{{ user_info.username }}</div>
     {% if user_profile and user_info.pk != user_profile.pk %}
         <div id="blog-subscribe-button">
-            <form action="{% url 'subscribe' user_info.pk %}" method="post">{% csrf_token %}
-                <input type="submit" value="{% if has_subscription %} Отписаться {% else %} Подписаться {% endif %}">
+            <form action="{% url 'manage_follow' user_info.pk %}" method="post">{% csrf_token %}
+                {% if is_followed %}
+                    <button type="submit" name="unfollow" value="{{ user_info.pk }}">
+                        Отписаться</button>
+                {% else %}
+                    <button type="submit" name="follow" value="{{ user_info.pk }}">
+                        Подписаться</button>
+                {% endif %}
             </form>
         </div>
     {% endif %}

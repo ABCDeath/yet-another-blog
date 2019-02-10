@@ -12,7 +12,7 @@
                 <span class="post-content">{{ post.content_text|linebreaks }}</span>
             </div>
             <div class="post-footer">
-                <div class="date-container">{{ post.pub_date }}</div>
+                <div class="date-container">{{ post.pub_date|date:"j F (D) Y - H:i" }}</div>
                 <div class="author-container">
                     <a href="{% url 'blog' post.author.user.profile.pk %}">
                         @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})</a>

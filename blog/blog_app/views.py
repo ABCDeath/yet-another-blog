@@ -62,7 +62,7 @@ class FeedView(LoginRequiredMixin, AllView):
 
     def get_queryset(self):
         return (Post.objects.prefetch_related('author')
-                .filter(author__in=self.request.user.profile.subscription.all())
+                .filter(author__in=self.request.user.profile.following.all())
                 .order_by('-pub_date'))
 
     def get_context_data(self, **kwargs):
@@ -143,17 +143,16 @@ class BlogView(generic.ListView):
 
         if self.request.user.is_authenticated:
             context['user_profile'] = self.request.user.profile
-            context['has_subscription'] = (self.request.user.profile
-                                           .subscription.filter(pk=profile_pk)
-                                           .exists())
+            context['is_followed'] = (self.request.user.profile
+                                      .following.filter(pk=profile_pk).exists())
 
         return context
 
 
-class SubscriptionView(LoginRequiredMixin, generic.ListView):
+class FollowingView(LoginRequiredMixin, generic.ListView):
     model = Profile
 
-    template_name = 'blog_app/subscription.html'
+    template_name = 'blog_app/following.html'
     context_object_name = 'profiles'
 
     def get_context_data(self, **kwargs):
@@ -165,7 +164,7 @@ class SubscriptionView(LoginRequiredMixin, generic.ListView):
         return context
 
     def get_queryset(self):
-        return (self.request.user.profile.subscription.all()
+        return (self.request.user.profile.following.all()
                 .order_by('user__username'))
 
 

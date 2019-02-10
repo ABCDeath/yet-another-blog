@@ -43,7 +43,7 @@ class AllView(generic.ListView):
 
     login_url = '/accounts/login/'
 
-    template_name = 'blog_app/feed.html'
+    template_name = 'blog_app/all_posts.html'
     context_object_name = 'posts_feed'
     paginate_by = 10
 

@@ -18,6 +18,9 @@
             <form action="{% url 'post_update' post.pk %}" method="get">
                 <input type="submit" value="Редактировать"/>
             </form>
+            <form action="{% url 'post_delete' post.pk %}" method="get">
+                <input type="submit" value="Удалить"/>
+            </form>
             {% endif %}
         </div>
     </div>

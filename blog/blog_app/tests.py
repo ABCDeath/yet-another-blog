@@ -19,6 +19,14 @@ class ProfileModelTest(TestCase):
         self.assertEqual(
             user.profile, Profile.objects.get(user__username=username))
 
+    def test_profile_auto_remove(self):
+        username = 'user'
+        user = User.objects.create_user(username, '', 'testpassword')
+        user.delete()
+
+        self.assertQuerysetEqual(User.objects.filter(username=username), [])
+        self.assertQuerysetEqual(Profile.objects.all(), [])
+
     def test_follow_self(self):
         username = 'user'
         user = User.objects.create_user(username, '', 'testpassword')

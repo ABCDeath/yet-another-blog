@@ -126,8 +126,13 @@ class RootRedirectViewTest(TestCase):
         username = 'user'
         user = User.objects.create_user(username, '', 'testpassword')
         self.client.force_login(user=user)
+
         self.assertRedirects(
             self.client.get(reverse('root_redirect')), reverse('feed'))
+
+        self.client.logout()
+        self.assertRedirects(
+            self.client.get(reverse('root_redirect')), reverse('all'))
 
 
 class AllViewTest(TestCase):
@@ -145,3 +150,42 @@ class AllViewTest(TestCase):
         self.assertContains(res, f'@{username} ({user.get_full_name()})')
         self.assertContains(res, p.caption)
         self.assertContains(res, p.content_text)
+
+
+class FeedViewTest(TestCase):
+    def test_not_logged_in_redirect(self):
+        self.assertRedirects(
+            self.client.get(reverse('feed')),
+            ''.join([reverse('login'), '?next=', reverse('feed')]))
+
+    def test_logged_in_content(self):
+        username = 'user'
+        user = User.objects.create_user(username, '', 'testpassword')
+
+        following_uname = 'following'
+        following = User.objects.create_user(
+            following_uname, '', 'testpassword')
+
+        user.profile.following.add(following.profile)
+
+        following_post = Post(caption='following_caption',
+                              content_text='following_text',
+                              author=following.profile)
+        following_post.save()
+
+        another = User.objects.create_user('another', '', 'testpassword')
+
+        another_post = Post(caption='another_caption',
+                            content_text='another_text',
+                            author=another.profile)
+        another_post.save()
+
+        self.client.force_login(user=user)
+
+        res = self.client.get(reverse('feed'))
+        self.assertContains(res, f'@{following} ({following.get_full_name()})')
+        self.assertContains(res, following_post.caption)
+        self.assertContains(res, following_post.content_text)
+        self.assertNotContains(res, f'@{another} ({another.get_full_name()})')
+        self.assertNotContains(res, another_post.caption)
+        self.assertNotContains(res, another_post.content_text)

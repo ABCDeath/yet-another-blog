@@ -59,3 +59,18 @@ class ProfileModelTest(TestCase):
         user.profile.following.add(following.profile)
 
         self.assertQuerysetEqual(user.profile.posts_read.all(), [])
+
+
+class PostModelTest(TestCase):
+    def test_auto_remove_user_posts(self):
+        username = 'user'
+        user = User.objects.create_user(username, '', 'testpassword')
+
+        p = Post(caption='c', content_text='t', author=user.profile)
+        p.save()
+
+        self.assertEqual(Post.objects.count(), 1)
+
+        user.delete()
+
+        self.assertEqual(Post.objects.count(), 0)

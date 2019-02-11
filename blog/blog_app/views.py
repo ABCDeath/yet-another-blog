@@ -1,18 +1,18 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
+from django.db.models.signals import m2m_changed, post_save
+from django.dispatch import receiver
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
-from django.db.models.signals import post_save, m2m_changed
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404
 
 from celery import group
 
-from .models import Post, Profile
+from .models import Profile, Post
 from .tasks import send_new_post_notification
 
 
@@ -28,10 +28,9 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=Profile.following.through)
-def profile_update(sender, instance, **kwargs):
-    if kwargs.get('action') == 'post_remove':
-        posts_read = instance.posts_read.filter(
-            author__id__in=kwargs.get('pk_set'))
+def profile_update(sender, instance, action, pk_set, **kwargs):
+    if action == 'post_remove':
+        posts_read = instance.posts_read.filter(author__id__in=pk_set)
         instance.posts_read.remove(*posts_read)
 
 
@@ -45,11 +44,20 @@ def post_create_email_followers(sender, instance, created, **kwargs):
 
         path = str(reverse_lazy('post_detail', args=(instance.pk,)))
 
-        send_tasks = group(
-            send_new_post_notification.si(
-                str(instance.author), path, email)
-            for email in followers_email)
+        send_tasks = group([
+            send_new_post_notification.si(str(instance.author), path, email)
+            for email in followers_email])
         send_tasks()
+
+
+class BaseView(generic.base.ContextMixin):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile'] = (self.request.user.profile
+                                   if self.request.user.is_authenticated
+                                   else None)
+
+        return context
 
 
 class RootRedirectView(generic.RedirectView):
@@ -58,7 +66,7 @@ class RootRedirectView(generic.RedirectView):
                 else reverse_lazy('all'))
 
 
-class AllView(generic.ListView):
+class AllView(BaseView, generic.ListView):
     model = Post
 
     login_url = '/accounts/login/'
@@ -68,15 +76,7 @@ class AllView(generic.ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Post.objects.prefetch_related('author').order_by('-pub_date')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
+        return Post.objects.select_related('author').order_by('-pub_date')
 
 
 class FeedView(LoginRequiredMixin, AllView):
@@ -86,20 +86,11 @@ class FeedView(LoginRequiredMixin, AllView):
 
     template_name = 'blog_app/feed.html'
     context_object_name = 'posts_feed'
-    paginate_by = 10
 
     def get_queryset(self):
-        return (Post.objects.prefetch_related('author')
+        return (Post.objects.select_related('author')
                 .filter(author__in=self.request.user.profile.following.all())
                 .order_by('-pub_date'))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
 
 
 @method_decorator(login_required, name='dispatch')
@@ -141,7 +132,7 @@ class ProfileUpdateView(generic.UpdateView):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class BlogView(generic.ListView):
+class BlogView(BaseView, generic.ListView):
     model = Post
 
     template_name = 'blog_app/blog.html'
@@ -169,49 +160,32 @@ class BlogView(generic.ListView):
         }
 
         if self.request.user.is_authenticated:
-            context['user_profile'] = self.request.user.profile
             context['is_followed'] = (self.request.user.profile
                                       .following.filter(pk=profile_pk).exists())
 
         return context
 
 
-class FollowingView(LoginRequiredMixin, generic.ListView):
+class FollowingView(BaseView, LoginRequiredMixin, generic.ListView):
     model = Profile
 
     template_name = 'blog_app/following.html'
     context_object_name = 'profiles'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
 
     def get_queryset(self):
         return (self.request.user.profile.following.all()
                 .order_by('user__username'))
 
 
-class PostView(generic.DetailView):
+class PostView(BaseView, generic.DetailView):
     model = Post
 
     template_name = 'blog_app/post_detail.html'
     context_object_name = 'post'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
-
 
 @method_decorator(login_required, name='dispatch')
-class PostCreate(generic.CreateView):
+class PostCreate(BaseView, generic.CreateView):
     model = Post
     fields = ['caption', 'content_text']
 
@@ -224,17 +198,9 @@ class PostCreate(generic.CreateView):
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
-
 
 @method_decorator(login_required, name='dispatch')
-class PostUpdate(generic.UpdateView):
+class PostUpdate(BaseView, generic.UpdateView):
     model = Post
     fields = ['caption', 'content_text']
 
@@ -247,17 +213,9 @@ class PostUpdate(generic.UpdateView):
     def get_success_url(self):
         return reverse_lazy('post_detail', args=(self.object.pk,))
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
-
 
 @method_decorator(login_required, name='dispatch')
-class PostDelete(generic.DeleteView):
+class PostDelete(BaseView, generic.DeleteView):
     model = Post
 
     def dispatch(self, request, *args, **kwargs):
@@ -269,11 +227,3 @@ class PostDelete(generic.DeleteView):
     def get_success_url(self):
         return reverse_lazy(
             'blog', args=(Profile.objects.get(user=self.request.user).pk,))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context

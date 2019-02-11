@@ -35,5 +35,7 @@
                 <div class="date-container">{{ post.pub_date|date:"j F (D) Y - H:i" }}</div>
             </div>
         </div>
+    {% empty %}
+        <p>В вашем блоге пока нет постов. Хотите <a href="{% url 'post_create' %}">написать</a>?</p>
     {% endfor %}
 {% endblock %}

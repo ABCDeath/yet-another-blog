@@ -1,0 +1,22 @@
+{% extends "blog_app/base.html" %}
+
+{% block title %}Подтверждение удаления поста{% endblock %}
+
+{% block header_content %}
+    <p>Вы действительно хотите удалить пост?</p>
+{% endblock %}
+
+{% block main_content %}
+    <form method="post">{% csrf_token %}
+        <div class="post-container">
+            <h1 class="post-caption">{{ object.caption }}</h1>
+            <div class="content-container">
+                <span class="post-content">{{ object.content_text|linebreaks }}</span>
+            </div>
+            <div class="post-footer">
+                <div class="date-container">{{ object.pub_date }}</div>
+            </div>
+        </div>
+        <input type="submit" value="Удалить">
+    </form>
+{% endblock %}

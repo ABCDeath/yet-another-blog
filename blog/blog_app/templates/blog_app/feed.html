@@ -1,0 +1,27 @@
+{% extends "blog_app/all_posts.html" %}
+
+{% block title %}Лента{% endblock %}
+
+{% block post_content_block %}
+    {% if user_profile and user_profile in post.profile_set.all %}
+        {{ post.content_text|linebreaks|truncatewords:"64" }}
+    {% else %}
+        {{ post.content_text|linebreaks }}
+    {% endif %}
+{% endblock %}
+
+{% block mark_post_button %}
+    {% if user_profile %}
+        <form action="{% url 'post_mark' %}" method="post">{% csrf_token %}
+            <button type="submit" id="mark_post_{{ forloop.counter }}" name="mark_post_read" value="{{ post.pk }}">
+                {% if user_profile and user_profile in post.profile_set.all %}
+                    Отметить: не прочитано
+                {% else %}
+                    Отметить: прочитано
+                {% endif %}
+            </button>
+    </form>
+    {% endif %}
+{% endblock %}
+
+{% block empty_post_feed %}<p>В вашей ленте пока нет постов.</p>{% endblock %}

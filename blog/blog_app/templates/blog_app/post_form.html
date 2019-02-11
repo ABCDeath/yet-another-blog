@@ -1,0 +1,22 @@
+{% extends "blog_app/base.html" %}
+
+{% block title %}Новый пост{% endblock %}
+
+{% block main_content %}
+    <div class="post-container">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-caption-container">
+                <label for="{{ form.caption.id_for_label }}">Заголовок:</label><br>
+                {{ form.caption.errors }}
+                {{ form.caption }}
+            </div>
+            <div class="form-content-text-container">
+                <label for="{{ form.content_text.id_for_label }}">Текст поста:</label><br>
+                {{ form.content_text.errors }}
+                {{ form.content_text }}
+            </div>
+            <input type="submit" value="Сохранить">
+        </form>
+    </div>
+{% endblock %}

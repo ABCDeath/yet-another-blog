@@ -1,0 +1,41 @@
+{% extends "blog_app/base.html" %}
+
+{% block title %}Блог{% endblock %}
+
+{% block header_content %}
+<header class="userinfo-header">
+    <div class="username-container" id="blog-userfullname">{{ user_info.full_name }}</div>
+    <div id="blog-postcount">Всего постов: {{ user_info.postcount }}</div>
+    <div class="author-container" id="blog-username">@{{ user_info.username }}</div>
+    {% if user_profile and user_info.pk != user_profile.pk %}
+        <div id="blog-subscribe-button">
+            <form action="{% url 'manage_follow' user_info.pk %}" method="post">{% csrf_token %}
+                {% if is_followed %}
+                    <button type="submit" name="unfollow" value="{{ user_info.pk }}">
+                        Отписаться</button>
+                {% else %}
+                    <button type="submit" name="follow" value="{{ user_info.pk }}">
+                        Подписаться</button>
+                {% endif %}
+            </form>
+        </div>
+    {% endif %}
+</header>
+{% endblock %}
+
+{% block main_content %}
+    {% for post in posts %}
+        <div class="post-container">
+            <a href="{% url 'post_detail' post.pk %}">
+                <h1 class="post-caption">{{ post.caption }}</h1></a>
+            <div class="content-container">
+                <span class="post-content">{{ post.content_text|linebreaks }}</span>
+            </div>
+            <div class="post-footer">
+                <div class="date-container">{{ post.pub_date|date:"j F (D) Y - H:i" }}</div>
+            </div>
+        </div>
+    {% empty %}
+        <p>В вашем блоге пока нет постов. Хотите <a href="{% url 'post_create' %}">написать</a>?</p>
+    {% endfor %}
+{% endblock %}

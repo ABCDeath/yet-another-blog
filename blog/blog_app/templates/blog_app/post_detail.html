@@ -1,0 +1,27 @@
+{% extends "blog_app/base.html" %}
+
+{% block title %}Пост{% endblock %}
+
+{% block main_content %}
+    <div class="post-container">
+        <h1 class="post-caption">{{ post.caption }}</h1>
+        <div class="content-container">
+            <span class="post-content">{{ post.content_text|linebreaks }}</span>
+        </div>
+        <div class="post-footer">
+            <div class="date-container">{{ post.pub_date|date:"j F (D) Y - H:i" }}</div>
+            <div class="author-container">
+                <a href="{% url 'blog' post.author.pk %}">
+                    @{{ post.author.user.username }} ({{ post.author.user.get_full_name }})</a>
+            </div>
+            {% if user_profile == post.author %}
+            <form action="{% url 'post_update' post.pk %}" method="get">
+                <input type="submit" value="Редактировать"/>
+            </form>
+            <form action="{% url 'post_delete' post.pk %}" method="get">
+                <input type="submit" value="Удалить"/>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

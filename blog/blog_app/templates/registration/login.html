@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log in page</title>
+</head>
+<body>
+<main>
+    {% load static %}
+
+    <link rel="stylesheet" type="text/css" href="{% static 'blog_app/style.css' %}">
+
+    <div class="login" id="container">
+        <h3 id="header">Blog log in</h3>
+
+        <form method="post">
+          {% csrf_token %}
+          {{ form.as_p }}
+            <div id="button-container">
+                <button type="submit">Login</button>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

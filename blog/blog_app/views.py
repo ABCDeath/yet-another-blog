@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
@@ -29,7 +29,10 @@ def save_user_profile(sender, instance, **kwargs):
 
 @receiver(m2m_changed, sender=Profile.following.through)
 def profile_update(sender, instance, action, pk_set, **kwargs):
-    if action == 'post_remove':
+    if action == 'pre_add':
+        if instance.pk == list(pk_set)[0]:
+            raise ValidationError('You can not follow yourself')
+    elif action == 'post_remove':
         posts_read = instance.posts_read.filter(author__id__in=pk_set)
         instance.posts_read.remove(*posts_read)
 

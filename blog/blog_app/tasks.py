@@ -2,6 +2,7 @@ from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
 from blog.celery import background_worker
+
 from blog_app.models import Post, Profile
 
 

@@ -1,18 +1,18 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
+from django.db.models.signals import m2m_changed, post_save
+from django.dispatch import receiver
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
-from django.db.models.signals import post_save, m2m_changed
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404
 
 from celery import group
 
-from .models import Post, Profile
+from .models import Profile, Post
 from .tasks import send_new_post_notification
 
 
@@ -28,10 +28,9 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=Profile.following.through)
-def profile_update(sender, instance, **kwargs):
-    if kwargs.get('action') == 'post_remove':
-        posts_read = instance.posts_read.filter(
-            author__id__in=kwargs.get('pk_set'))
+def profile_update(sender, instance, action, pk_set, **kwargs):
+    if action == 'post_remove':
+        posts_read = instance.posts_read.filter(author__id__in=pk_set)
         instance.posts_read.remove(*posts_read)
 
 
@@ -45,10 +44,9 @@ def post_create_email_followers(sender, instance, created, **kwargs):
 
         path = str(reverse_lazy('post_detail', args=(instance.pk,)))
 
-        send_tasks = group(
-            send_new_post_notification.si(
-                str(instance.author), path, email)
-            for email in followers_email)
+        send_tasks = group([
+            send_new_post_notification.si(str(instance.author), path, email)
+            for email in followers_email])
         send_tasks()
 
 

@@ -91,14 +91,6 @@ class FeedView(LoginRequiredMixin, AllView):
                 .filter(author__in=self.request.user.profile.following.all())
                 .order_by('-pub_date'))
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_profile'] = (self.request.user.profile
-                                   if self.request.user.is_authenticated
-                                   else None)
-
-        return context
-
 
 @method_decorator(login_required, name='dispatch')
 class ProfileUpdateView(generic.UpdateView):

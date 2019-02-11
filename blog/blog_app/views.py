@@ -66,7 +66,7 @@ class AllView(generic.ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Post.objects.prefetch_related('author').order_by('-pub_date')
+        return Post.objects.select_related('author').order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -87,7 +87,7 @@ class FeedView(LoginRequiredMixin, AllView):
     paginate_by = 10
 
     def get_queryset(self):
-        return (Post.objects.prefetch_related('author')
+        return (Post.objects.select_related('author')
                 .filter(author__in=self.request.user.profile.following.all())
                 .order_by('-pub_date'))
 

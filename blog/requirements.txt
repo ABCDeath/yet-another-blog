@@ -1,0 +1,4 @@
+celery
+django
+psycopg2-binary
+redis

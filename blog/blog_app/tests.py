@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import Profile, Post
 
@@ -114,3 +115,16 @@ class PostModelTest(TestCase):
         user.delete()
 
         self.assertEqual(Post.objects.count(), 0)
+
+
+class RootRedirectViewTest(TestCase):
+    def test_redirect_not_logged_in(self):
+        self.assertRedirects(
+            self.client.get(reverse('root_redirect')), reverse('all'))
+
+    def test_redirect_logged_in(self):
+        username = 'user'
+        user = User.objects.create_user(username, '', 'testpassword')
+        self.client.force_login(user=user)
+        self.assertRedirects(
+            self.client.get(reverse('root_redirect')), reverse('feed'))

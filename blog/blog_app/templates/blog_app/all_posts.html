@@ -10,11 +10,9 @@
             </a>
             <div class="content-container">
                 <span class="post-content">
-                    {% if user_profile and user_profile in post.profile_set.all %}
-                        {{ post.content_text|linebreaks|truncatewords:"64" }}
-                    {% else %}
+                    {% block post_content_block %}
                         {{ post.content_text|linebreaks }}
-                    {% endif %}
+                    {% endblock %}
                 </span>
             </div>
             <div class="post-footer">

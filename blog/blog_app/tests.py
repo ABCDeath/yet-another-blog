@@ -60,6 +60,46 @@ class ProfileModelTest(TestCase):
 
         self.assertQuerysetEqual(user.profile.posts_read.all(), [])
 
+    def test_follower_profile_cleanup(self):
+        username = 'user'
+        user = User.objects.create_user(username, '', 'testpassword')
+
+        following_uname = 'following'
+        following = User.objects.create_user(
+            following_uname, '', 'testpassword')
+
+        user.profile.following.add(following.profile)
+
+        p = Post(caption='c', content_text='t', author=following.profile)
+        p.save()
+
+        user.profile.posts_read.add(p)
+
+        following.delete()
+
+        self.assertQuerysetEqual(user.profile.posts_read.all(), [])
+        self.assertQuerysetEqual(user.profile.following.all(), [])
+
+    def test_follows(self):
+        username = 'user'
+        user1 = User.objects.create_user(username + '1', '', 'testpassword')
+        user2 = User.objects.create_user(username + '2', '', 'testpassword')
+        user3 = User.objects.create_user(username + '3', '', 'testpassword')
+
+        user1.profile.following.add(user2.profile, user3.profile)
+        user2.profile.following.add(user1.profile)
+        user3.profile.following.add(user2.profile)
+
+        self.assertQuerysetEqual(
+            user1.profile.following.all().order_by('user__username'),
+            ['<Profile: user2 ()>', '<Profile: user3 ()>'])
+        self.assertQuerysetEqual(
+            user2.profile.following.all().order_by('user__username'),
+            ['<Profile: user1 ()>'])
+        self.assertQuerysetEqual(
+            user3.profile.following.all().order_by('user__username'),
+            ['<Profile: user2 ()>'])
+
 
 class PostModelTest(TestCase):
     def test_auto_remove_user_posts(self):

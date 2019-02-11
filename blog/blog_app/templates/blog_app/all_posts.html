@@ -24,5 +24,7 @@
                 {% block mark_post_button %}{% endblock %}
             </div>
         </div>
+    {% empty %}
+        {% block empty_post_feed %}<p>Постов нет.</p>{% endblock %}
     {% endfor %}
 {% endblock %}

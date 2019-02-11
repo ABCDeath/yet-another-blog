@@ -128,3 +128,20 @@ class RootRedirectViewTest(TestCase):
         self.client.force_login(user=user)
         self.assertRedirects(
             self.client.get(reverse('root_redirect')), reverse('feed'))
+
+
+class AllViewTest(TestCase):
+    def test_content(self):
+        username = 'user'
+        user = User.objects.create_user(username, '', 'testpassword')
+        user.first_name = 'first'
+        user.last_name = 'last'
+        user.save()
+
+        p = Post(caption='post caption', content_text='t', author=user.profile)
+        p.save()
+
+        res = self.client.get(reverse('all'))
+        self.assertContains(res, f'@{username} ({user.get_full_name()})')
+        self.assertContains(res, p.caption)
+        self.assertContains(res, p.content_text)
